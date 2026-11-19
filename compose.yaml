@@ -1,0 +1,8 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Fail immediately if no persistent cloud database is configured.
+      DATABASE_URL: ${DATABASE_URL:?Set your Tiger Cloud database URL in .env}

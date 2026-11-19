@@ -1,0 +1,14 @@
+{
+  "initial_balance": 10.0,
+  "risk_fraction": 0.01,
+  "daily_loss_fraction": 0.03,
+  "max_drawdown": 0.20,
+  "leverage": 30.0,
+  "margin_fraction": 0.50,
+  "max_trades": 3,
+  "min_units": 1,
+  "unit_step": 1,
+  "max_spread_pips": 1.5,
+  "slippage_pips": 0.2,
+  "commission_per_million_per_side": 0.0
+}

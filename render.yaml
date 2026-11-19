@@ -1,0 +1,19 @@
+# Place the contents of this folder at the Git repository root.
+# This declares a PAID worker. Check the account's quoted price before deploying.
+services:
+  - type: worker
+    name: eurusd-paper-10usd
+    runtime: docker
+    plan: 0.5c-512mb
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python cloud_start.py
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: OANDA_ACCOUNT_ID
+        sync: false
+      - key: OANDA_TOKEN
+        sync: false
