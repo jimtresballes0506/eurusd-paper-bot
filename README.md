@@ -4,11 +4,18 @@ Built 19 November 2026. This is an experimental paper bot, not a proven profitab
 
 ## Current status
 
-Code and offline tests are complete. The bot is NOT deployed or trading. No Tiger Cloud database or OANDA account has been connected. Real-feed, cloud-database and Docker deployment checks remain pending. No real-market backtest or profit claim is included.
+The bot is NOT deployed or trading. A Windows Exness MT5 demo adapter and installer are now included: **[Windows server setup](WINDOWS_SETUP.md)**. All 24 offline tests pass. Real MT5/Windows, cloud-database and Docker deployment checks remain pending. No real-market backtest or profit claim is included.
+
+An empty Railway service was prepared with a reference to the existing database connection, but no worker was deployed. Render planning was blocked by payment setup. Neither provider is needed to host the worker when using an existing AWS Windows server. Database configuration on Windows is separate; see the Windows guide for optional Tiger Cloud persistence.
 
 ## Architecture
 
-OANDA practice bid/ask stream -> Python worker -> Tiger Cloud PostgreSQL state and trade journal.
+Choose one price source:
+
+- Exness MT5 demo terminal on Windows -> `windows_worker.py` -> local SQLite or Tiger Cloud PostgreSQL.
+- Eligible OANDA v20 practice stream -> `bot.py run` -> local SQLite or Tiger Cloud PostgreSQL.
+
+The MT5 adapter reads prices only. Its internal simulated trades do not appear as orders in MT5. OANDA Global Markets does not provide the v20 API; do not assume a Philippine OANDA demo account supports this feed.
 
 This assumes “Tiger Cloud” means Tiger Data. Tiger Cloud supplies the database, not the always-running Python process or FX feed. Run the included worker on an always-on Linux computer, a VPS, or a container worker service. Hosting and data-provider charges, if any, are separate from the $10 imaginary account. This package provisions no paid services.
 
@@ -39,7 +46,7 @@ Stops and daily loss thresholds are triggers, not guaranteed maximum losses. Gap
 
 ## First run: local Linux / WSL
 
-Python 3.12 recommended. Local SQLite mode uses a Linux file lock; on Windows use WSL or Docker.
+Python 3.12 recommended. SQLite writer locking supports Linux and Windows. For native Windows MT5, follow [WINDOWS_SETUP.md](WINDOWS_SETUP.md) instead of these Linux/OANDA instructions.
 
 ```bash
 python -m venv .venv
@@ -121,7 +128,7 @@ Replay always uses a local database and ignores `DATABASE_URL`. Use a fresh sepa
 
 ## Limitations and validation
 
-15 offline tests cover fills and costs, risk/margin sizing, minimum size skips, duplicate quotes, gap exits, session exits, daily/permanent halts, persisted restarts, config mismatch, single-writer locking, invalid quotes, completed-candle entries/trade limits, and cloud credential validation. Synthetic test prices establish software behavior only, not trading performance.
+24 offline tests cover fills and costs, risk/margin sizing, minimum size skips, duplicate quotes, gap exits, session exits, daily/permanent halts, persisted restarts, config mismatch, single-writer locking, invalid quotes, completed-candle entries/trade limits, cloud credential validation, and MT5 demo/account/symbol guards, stale-price rejection, reconnects and ledger identity. The tests run on Linux using a fake MT5 interface. Windows locking, Task Scheduler and a live Exness demo connection still require testing on the server. Synthetic test prices establish software behavior only, not trading performance.
 
 The feed is sampled by the provider and cannot reproduce all market ticks. The simulator has no order book, queue, market impact, variable fill latency, swaps or exact broker margin-closeout rules. Commission defaults to zero; adjust it for the account. There is no economic-news filter. Gap-affected trades should be excluded from claims about normal execution, but remain in the ledger. An outage may leave a position open beyond the planned intraday session and therefore invalidate a no-financing assumption.
 
@@ -140,4 +147,4 @@ No real-market historical dataset has been downloaded or evaluated. Cloud/real-f
 
 The cloud start command requires the Tiger PostgreSQL URI and both practice-feed settings. Missing settings stop startup instead of silently using a temporary local database. `.dockerignore` excludes credentials and local account files from the build context.
 
-Connection still required: install/connect Render in ChatGPT, choose the source repository, and enter database/feed secrets privately in the service environment. The repository contains the bot and deployment configuration. Render JSON-schema validation passed. Platform deployment planning, feed authentication, cloud persistence checks and active quote monitoring remain pending.
+Render JSON-schema validation passed, but platform planning required payment information and no worker was deployed. Feed authentication, cloud persistence checks and active quote monitoring remain pending. For the existing AWS Windows server, use the Windows guide above; the Render/OANDA start command does not run MT5.

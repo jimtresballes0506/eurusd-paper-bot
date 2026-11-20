@@ -218,13 +218,22 @@ class Store:
                 raise RuntimeError('Another worker already owns this paper account')
         else:
             # Holding this separate OS lock also protects between transactions.
-            import fcntl
-            self.lock = open(path + '.lock', 'a')
+            self.lock = open(path + '.lock', 'a+b')
             try:
-                fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError:
+                if os.name == 'nt':
+                    import msvcrt
+                    self.lock.seek(0, os.SEEK_END)
+                    if self.lock.tell() == 0:
+                        self.lock.write(b'0')
+                        self.lock.flush()
+                    self.lock.seek(0)
+                    msvcrt.locking(self.lock.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as error:
                 self.lock.close()
-                raise
+                raise BlockingIOError('Cannot acquire the paper-account writer lock') from error
             self.db = sqlite3.connect(path)
             self.db.execute('PRAGMA journal_mode=WAL')
         self.db.execute('CREATE TABLE IF NOT EXISTS eurusd_state (id INTEGER PRIMARY KEY, config TEXT NOT NULL, payload TEXT NOT NULL)')
